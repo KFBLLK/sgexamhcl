@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="zh-SG">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新加坡小学高级华文听写练习 Pro</title>
+<style>
+:root {
+  --primary: #1a73e8;
+  --success: #34a853;
+  --danger: #ea4335;
+  --warn: #fbbc04;
+  --bg: #f0f4ff;
+  --card: #ffffff;
+  --text: #202124;
+  --sub: #5f6368;
+  --border: #dadce0;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── 顶栏 ── */
+.topbar {
+  background: var(--primary);
+  color: #fff;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  flex-wrap: wrap;
+}
+.topbar h1 { font-size: 17px; flex: 1; }
+.topbar .badge {
+  background: rgba(255,255,255,.2);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 12px;
+}
+
+/* ── 标签页 ── */
+.tabs {
+  display: flex;
+  background: #fff;
+  border-bottom: 2px solid var(--border);
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 12px 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--sub);
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: .2s;
+}
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.tab-btn:hover:not(.active) { background: #f8f9fa; }
+
+/* ── 面板 ── */
+.panel { display: none; padding: 20px; max-width: 800px; margin: 0 auto; }
+.panel.active { display: block; }
+
+/* ── 卡片 ── */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  margin-bottom: 16px;
+}
+.card-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--primary); }
+
+/* ── 按钮组 ── */
+.btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+  transition: .15s;
+}
+.btn:hover { background: #f0f4ff; border-color: var(--primary); }
+.btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+.btn.success { background: var(--success); color: #fff; border-color: var(--success); }
+.btn.large { font-size: 15px; padding: 12px 28px; border-radius: 10px; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ── 听写练习区 ── */
+.practice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.progress-info { font-size: 13px; color: var(--sub); }
+.progress-bar-wrap { height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 16px; }
+.progress-bar { height: 100%; background: var(--primary); border-radius: 3px; transition: width .3s; }
+
+.word-card {
+  background: linear-gradient(135deg, #e8f0fe, #f0f4ff);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+  border: 1.5px solid #c5d8ff;
+}
+.pinyin-hint { font-size: 20px; color: var(--sub); letter-spacing: 2px; margin-bottom: 8px; min-height: 30px; }
+.play-btn {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(26,115,232,.4);
+  transition: .15s;
+  margin: 0 8px;
+}
+.play-btn:hover { transform: scale(1.08); }
+.play-btn.secondary { background: #5f6368; box-shadow: none; font-size: 18px; }
+
+.answer-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.answer-input {
+  flex: 1;
+  font-size: 20px;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+  font-family: inherit;
+  transition: .2s;
+  text-align: center;
+  letter-spacing: 2px;
+}
+.answer-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,115,232,.15); }
+.answer-input.correct { border-color: var(--success); background: #e6f9ed; }
+.answer-input.wrong { border-color: var(--danger); background: #fce8e6; }
+
+.feedback-box {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px;
+  border-radius: 8px;
+  min-height: 42px;
+  margin-bottom: 10px;
+  transition: .2s;
+}
+.feedback-box.correct { background: #e6f9ed; color: var(--success); }
+.feedback-box.wrong { background: #fce8e6; color: var(--danger); }
+.feedback-box.hint { background: #fef7e0; color: #b36a00; }
+
+.action-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* ── 结果卡 ── */
+.result-card {
+  text-align: center;
+  padding: 30px;
+}
+.score-circle {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  margin-bottom: 16px;
+  border: 5px solid;
+}
+.score-circle .score-num { font-size: 32px; }
+.score-circle .score-total { font-size: 13px; opacity: .7; }
+.rank-text { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.rank-sub { font-size: 14px; color: var(--sub); margin-bottom: 20px; }
+
+/* ── 词语列表 ── */
+.word-list { list-style: none; }
+.word-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: #f8f9fa;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.word-item .hanzi { font-size: 18px; font-weight: 700; min-width: 60px; }
+.word-item .py { font-size: 13px; color: var(--sub); flex: 1; }
+.word-item .status-icon { font-size: 18px; }
+.word-item.wrong-item { background: #fce8e6; }
+.word-item.right-item { background: #e6f9ed; }
+
+/* ── 错题本 ── */
+.empty-state { text-align: center; padding: 40px; color: var(--sub); font-size: 15px; }
+.wrong-list-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  background: #fff5f5;
+  border: 1px solid #fdd;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.wrong-list-item .hanzi { font-size: 20px; font-weight: 700; color: var(--danger); min-width: 60px; }
+.wrong-list-item .info { flex: 1; }
+.wrong-list-item .info .py { font-size: 13px; color: var(--sub); }
+.wrong-list-item .info .cnt { font-size: 12px; color: var(--danger); margin-top: 2px; }
+.wrong-list-item .del-btn {
+  background: none; border: none; cursor: pointer; color: #ccc; font-size: 16px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.wrong-list-item .del-btn:hover { color: var(--danger); background: #fce8e6; }
+
+/* ── 打印版 ── */
+.print-controls { margin-bottom: 16px; }
+.print-lesson-page {
+  break-after: page;
+  page-break-after: always;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #ccc;
+}
+.print-lesson-page:last-child { border: none; }
+.lesson-title-print {
+  font-size: 13px;
+  font-weight: bold;
+  margin: 0 0 8px;
+  padding: 4px 8px;
+  background: #2c3e50;
+  color: #fff;
+  border-radius: 4px;
+  display: inline-block;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.student-info-print {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  border-bottom: 1px solid #999;
+  padding-bottom: 4px;
+}
+.print-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.print-table th, .print-table td {
+  border: 1px solid #bdc3c7;
+  padding: 5px 7px;
+  text-align: left;
+}
+.print-table th { background: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.print-wrapper { background: #fff; padding: 15mm 18mm; min-height: 297mm; }
+
+/* ── 统计 ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.stat-card {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+.stat-num { font-size: 28px; font-weight: 700; color: var(--primary); }
+.stat-label { font-size: 12px; color: var(--sub); margin-top: 4px; }
+
+/* ── 响应式 ── */
+@media (max-width: 480px) {
+  .panel { padding: 12px; }
+  .topbar h1 { font-size: 14px; }
+  .answer-input { font-size: 18px; }
+}
+
+/* ── 打印媒体 ── */
+@media print {
+  @page { size: A4; margin: 8mm 12mm; }
+  body { background: white; }
+  .topbar, .tabs, .panel:not(#print-panel), .print-controls { display: none !important; }
+  #print-panel { display: block !important; padding: 0; max-width: 100%; }
+  .print-wrapper { box-shadow: none; padding: 0; }
+  .print-lesson-page { break-after: page; margin: 0; padding: 4mm 0; border: none; }
+}
+
+/* ── 动画 ── */
+@keyframes pop { 0%{transform:scale(.85);opacity:0} 100%{transform:scale(1);opacity:1} }
+.pop { animation: pop .2s ease; }
+
+.lesson-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.lesson-selector select {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+.lesson-selector select:focus { border-color: var(--primary); }
+
+.mode-info {
+  font-size: 12px;
+  color: var(--sub);
+  background: #f0f4ff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.tips-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.tip-chip {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #e8f0fe;
+  color: var(--primary);
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📝 新加坡小学高级华文听写练习 Pro</h1>
+  <span class="badge">P3–P6</span>
+  <span class="badge" id="wrong-badge" style="background:#ea4335;display:none">错题 0</span>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('practice')">🎯 听写练习</button>
+  <button class="tab-btn" onclick="showTab('review')">📚 词语复习</button>
+  <button class="tab-btn" onclick="showTab('wrong')">❌ 错题本</button>
+  <button class="tab-btn" onclick="showTab('stats')">📊 学习统计</button>
+  <button class="tab-btn" onclick="showTab('print')">🖨️ 打印版</button>
+</div>
+
+<!-- ══ 听写练习 ══ -->
+<div class="panel active" id="practice-panel">
+  <div class="card">
+    <div class="card-title">选择年级和课文</div>
+    <div class="btn-group" id="grade-btns">
+      <button class="btn active" onclick="setGrade('p3')">小三</button>
+      <button class="btn" onclick="setGrade('p4')">小四</button>
+      <button class="btn" onclick="setGrade('p5')">小五</button>
+      <button class="btn" onclick="setGrade('p6')">小六</button>
+    </div>
+    <div class="lesson-selector">
+      <label style="font-size:13px;color:var(--sub);">选课：</label>
+      <select id="lesson-select" onchange="setLesson(this.value)"></select>
+      <button class="btn" onclick="startAllLesson()">全课练习</button>
+    </div>
+    <div class="mode-info">
+      💡 点击 <strong>🔊 朗读</strong> 收听词语读音，然后在输入框中输入汉字，按回车或点击 <strong>✔ 确认</strong> 检查答案。
+      <div class="tips-row">
+        <span class="tip-chip">🔊 点击按钮朗读</span>
+        <span class="tip-chip">⌨️ 输入汉字</span>
+        <span class="tip-chip">↵ 回车确认</span>
+        <span class="tip-chip">📌 错词自动记录</span>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn success large" onclick="startPractice()">▶ 开始练习</button>
+      <button class="btn danger" onclick="startWrongPractice()" id="wrong-practice-btn">复习错题</button>
+    </div>
+  </div>
+
+  <!-- 练习主体 -->
+  <div id="practice-area" style="display:none">
+    <div class="card">
+      <div class="practice-header">
+        <span class="progress-info" id="prog-text">第 1 / 10 题</span>
+        <span class="progress-info" id="score-text">✅ 0 &nbsp; ❌ 0</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="prog-bar" style="width:0%"></div>
+      </div>
+      <div class="word-card">
+        <div class="pinyin-hint" id="pinyin-display"></div>
+        <div>
+          <button class="play-btn" onclick="playWord()" title="朗读词语">🔊</button>
+          <button class="play-btn secondary" onclick="playWordSlow()" title="慢速朗读">🐢</button>
+        </div>
+      </div>
+      <div class="answer-row">
+        <input type="text" class="answer-input" id="answer-input"
+               placeholder="输入听到的汉字词语…"
+               onkeydown="if(event.key==='Enter')checkAnswer()"
+               autocomplete="off" autocorrect="off" autocapitalize="off">
+      </div>
+      <div class="feedback-box" id="feedback-box"></div>
+      <div class="action-row">
+        <button class="btn success large" onclick="checkAnswer()" id="confirm-btn">✔ 确认</button>
+        <button class="btn large" onclick="skipWord()" id="skip-btn">跳过 →</button>
+        <button class="btn" onclick="showHint()" id="hint-btn">💡 提示</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 结果 -->
+  <div id="result-area" style="display:none">
+    <div class="card result-card">
+      <div class="score-circle" id="score-circle">
+        <span class="score-num" id="final-score">0</span>
+        <span class="score-total" id="final-total">/10</span>
+      </div>
+      <div class="rank-text" id="rank-text"></div>
+      <div class="rank-sub" id="rank-sub"></div>
+      <div class="btn-group" style="justify-content:center">
+        <button class="btn success large" onclick="startPractice()">再练一次</button>
+        <button class="btn danger large" onclick="startWrongPractice()" id="result-wrong-btn">专攻错题</button>
+        <button class="btn large" onclick="showResultDetail()">查看详情</button>
+      </div>
+    </div>
+    <div id="result-detail" style="display:none">
+      <div class="card">
+        <div class="card-title">本次答题详情</div>
+        <ul class="word-list" id="result-word-list"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 词语复习 ══ -->
+<div class="panel" id="review-panel">
+  <div class="card">
+    <div class="card-title">词语对照表</div>
+    <div class="btn-group" id="review-grade-btns">
+      <button class="btn active" onclick="setReviewGrade('p3')">小三</button>
+      <button class="btn" onclick="setReviewGrade('p4')">小四</button>
+      <button class="btn" onclick="setReviewGrade('p5')">小五</button>
+      <button class="btn" onclick="setReviewGrade('p6')">小六</button>
+    </div>
+    <div class="lesson-selector">
+      <label style="font-size:13px;color:var(--sub);">选课：</label>
+      <select id="review-lesson-select" onchange="renderReview()"></select>
+    </div>
+  </div>
+  <div id="review-content"></div>
+</div>
+
+<!-- ══ 错题本 ══ -->
+<div class="panel" id="wrong-panel">
+  <div class="card">
+    <div class="card-title">我的错题本</div>
+    <div class="btn-group">
+      <button class="btn success" onclick="startWrongPractice()">🎯 专项练习</button>
+      <button class="btn danger" onclick="clearAllWrong()">🗑️ 清空错题</button>
+    </div>
+  </div>
+  <div id="wrong-list-content"></div>
+</div>
+
+<!-- ══ 统计 ══ -->
+<div class="panel" id="stats-panel">
+  <div class="card">
+    <div class="card-title">📊 学习统计</div>
+    <div class="stats-grid" id="stats-grid"></div>
+    <div id="grade-stats-content"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">错误最多的词语（Top 10）</div>
+    <ul class="word-list" id="top-wrong-list"></ul>
+  </div>
+</div>
+
+<!-- ══ 打印版 ══ -->
+<div class="panel" id="print-panel">
+  <div class="print-controls card">
+    <div class="card-title">打印设置</div>
+    <div class="btn-group" id="print-grade-btns">
+      <button class="btn active" onclick="setPrintGrade('p3')">小三</button>
+      <button class="btn" onclick="setPrintGrade('p4')">小四</button>
+      <button class="btn" onclick="setPrintGrade('p5')">小五</button>
+      <button class="btn" onclick="setPrintGrade('p6')">小六</button>
+    </div>
+    <div class="btn-group">
+      <button class="btn active" id="pv1-btn" onclick="setPrintVer('v1')">版本1：汉字+拼音</button>
+      <button class="btn" id="pv2-btn" onclick="setPrintVer('v2')">版本2：默写自测</button>
+    </div>
+    <div style="margin-top:8px">
+      <button class="btn success large" onclick="window.print()">🖨️ 打印 / 存PDF</button>
+      <span style="font-size:12px;color:var(--sub);margin-left:10px">打印时勾选"背景图形"，纸张A4，边距默认</span>
+    </div>
+  </div>
+  <div class="print-wrapper" id="print-wrapper"></div>
+</div>
+
+<script>
+// ════════════════════════════════
+// 词库数据（P3~P6，新加坡高级华文）
+// ════════════════════════════════
+const D = {
+  p3: [
+    {t:"第一课《美丽的愿望》",w:[["科学","kē xué"],["将来","jiāng lái"],["当司机","dāng sī jī"],["希望","xī wàng"],["成为","chéng wéi"],["军人","jūn rén"],["保卫","bǎo wèi"],["练习","liàn xí"],["努力","nǔ lì"],["愿望","yuàn wàng"],["忘记","wàng jì"],["总是","zǒng shì"],["实现","shí xiàn"],["一篇课文","yī piān kè wén"],["复习","fù xí"],["一件事","yī jiàn shì"],["争取","zhēng qǔ"],["举手","jǔ shǒu"],["样子","yàng zi"],["读书","dú shū"]]},
+    {t:"第二课《我的朋友和家人》",w:[["姓名","xìng míng"],["胖胖的","pàng pàng de"],["瘦瘦的","shòu shòu de"],["矮矮的","ǎi ǎi de"],["高高的","gāo gāo de"],["帮手","bāng shou"],["叔叔","shū shu"],["阿姨","ā yí"],["有趣","yǒu qù"],["脸圆圆的","liǎn yuán yuán de"],["头发","tóu fa"],["卷卷的","juǎn juǎn de"],["身体","shēn tǐ"],["强壮","qiáng zhuàng"],["有福气","yǒu fú qi"],["相信","xiāng xìn"],["一定","yī dìng"]]},
+    {t:"第三课《我的好伙伴》",w:[["蓝色","lán sè"],["长方形","cháng fāng xíng"],["方形","fāng xíng"],["三角形","sān jiǎo xíng"],["吸管","xī guǎn"],["闹钟","nào zhōng"],["伙伴","huǒ bàn"],["手表","shǒu biǎo"],["颜色","yán sè"],["旁边","páng biān"],["睡觉","shuì jiào"],["准时","zhǔn shí"],["改掉","gǎi diào"],["迟到","chí dào"],["习惯","xí guàn"],["陪伴","péi bàn"]]},
+    {t:"第四课《奇妙的变化》",w:[["绿豆","lǜ dòu"],["变化","biàn huà"],["发芽","fā yá"],["健康","jiàn kāng"],["幼苗","yòu miáo"],["摆动","bǎi dòng"],["乌龟","wū guī"],["青蛙","qīng wā"],["已经","yǐ jīng"]]},
+    {t:"第五课《难忘的一天》",w:[["画展","huà zhǎn"],["傍晚","bàng wǎn"],["逛街","guàng jiē"],["踢球","tī qiú"],["爷爷","yé ye"],["电脑","diàn nǎo"],["附近","fù jìn"],["付钱","fù qián"],["扫地","sǎo dì"],["收拾","shōu shi"],["准备","zhǔn bèi"]]},
+    {t:"第六课《是我不好》",w:[["应该","yīng gāi"],["扔垃圾","rēng lā jī"],["犯错","fàn cuò"],["推倒","tuī dǎo"],["撞倒","zhuàng dǎo"],["原谅","yuán liàng"],["弄破","nòng pò"],["没关系","méi guān xi"],["突然","tū rán"],["跌倒","diē dǎo"],["受伤","shòu shāng"],["立刻","lì kè"]]},
+    {t:"第七课《留张便条》",w:[["赶快","gǎn kuài"],["便条","biàn tiáo"],["邻居","lín jū"],["花盆","huā pén"],["眼镜","yǎn jìng"],["生病","shēng bìng"],["休息","xiū xi"],["电视","diàn shì"],["轻轻地","qīng qīng de"],["地板","dì bǎn"],["乖孩子","guāi hái zi"]]},
+    {t:"第八课《我真能干》",w:[["转盘","zhuǎn pán"],["需要","xū yào"],["贺卡","hè kǎ"],["然后","rán hòu"],["接着","jiē zhe"],["折衣服","zhé yī fu"],["晒衣服","shài yī fu"],["容易","róng yì"],["乱七八糟","luàn qī bā zāo"]]},
+    {t:"第九课《我有办法》",w:[["鼻子","bí zi"],["救人","jiù rén"],["想办法","xiǎng bàn fǎ"],["称重","chēng zhòng"],["古时候","gǔ shí hou"],["考试","kǎo shì"],["重量","zhòng liàng"],["夸奖","kuā jiǎng"],["神童","shén tóng"]]},
+    {t:"第十课《我住的地方真干净》",w:[["扔垃圾","rēng lā jī"],["环境","huán jìng"],["收拾","shōu shi"],["厕所","cè suǒ"],["周末","zhōu mò"],["决定","jué dìng"],["吃惊","chī jīng"]]},
+    {t:"第十一课《环保小天使》",w:[["浪费","làng fèi"],["环保袋","huán bǎo dài"],["报纸","bào zhǐ"],["废物","fèi wù"],["利用","lì yòng"],["回收箱","huí shōu xiāng"],["超市","chāo shì"],["如果","rú guǒ"],["购物","gòu wù"]]},
+    {t:"第十二课《我爱新加坡》",w:[["设计","shè jì"],["狮子","shī zi"],["各种各样","gè zhǒng gè yàng"],["生活","shēng huó"],["国庆日","guó qìng rì"],["国旗","guó qí"],["唱国歌","chàng guó gē"],["兴奋","xīng fèn"]]}
+  ],
+  p4: [
+    {t:"第一课《一起看电视》",w:[["新闻","xīn wén"],["精彩","jīng cǎi"],["建议","jiàn yì"],["忍不住","rěn bù zhù"],["观众","guān zhòng"]]},
+    {t:"第二课《我们是兄弟姐妹》",w:[["担心","dān xīn"],["害怕","hài pà"],["乌云密布","wū yún mì bù"],["忽然","hū rán"],["灵机一动","líng jī yī dòng"],["表示","biǎo shì"]]},
+    {t:"第三课《妈妈，对不起》",w:[["警察","jǐng chá"],["补习","bǔ xí"],["脾气","pí qi"],["尊敬","zūn jìng"],["长辈","zhǎng bèi"],["后悔","hòu huǐ"]]},
+    {t:"第四课《今天我值日》",w:[["值日生","zhí rì shēng"],["插队","chā duì"],["安静","ān jìng"],["难为情","nán wéi qíng"],["责任感","zé rèn gǎn"],["提醒","tí xǐng"],["保证","bǎo zhèng"]]},
+    {t:"第五课《我不怕打针》",w:[["打针","dǎ zhēn"],["视力变差","shì lì biàn chà"],["结束","jié shù"],["继续","jì xù"],["闷闷不乐","mèn mèn bù lè"],["胆小","dǎn xiǎo"]]},
+    {t:"第六课《我要参加什么活动呢》",w:[["功夫","gōng fu"],["欢迎","huān yíng"],["童子军","tóng zǐ jūn"],["华乐团","huá yuè tuán"],["鼓励","gǔ lì"],["丰富","fēng fù"],["分享","fēn xiǎng"]]},
+    {t:"第七课《他的脸红了》",w:[["乘客","chéng kè"],["道歉","dào qiàn"],["劝告","quàn gào"],["批评","pī píng"],["秩序","zhì xù"],["耐心","nài xīn"]]},
+    {t:"第八课《马路如虎口》",w:[["车祸","chē huò"],["医院","yī yuàn"],["顺利","shùn lì"],["了解","liǎo jiě"],["表扬","biǎo yáng"],["交通规则","jiāo tōng guī zé"],["见义勇为","jiàn yì yǒng wéi"]]},
+    {t:"第九课《爱心无障碍》",w:[["居民","jū mín"],["饮料","yǐn liào"],["清楚","qīng chu"],["讨厌","tǎo yàn"]]},
+    {t:"第十课《这样才对》",w:[["礼貌","lǐ mào"],["帮助","bāng zhù"],["玩耍","wán shuǎ"],["害羞","hài xiū"]]},
+    {t:"第十一课《天天运动身体好》",w:[["奔跑","bēn pǎo"],["焦急","jiāo jí"],["欢呼","huān hū"],["优秀","yōu xiù"],["冠军","guàn jūn"],["亚军","yà jūn"],["成绩","chéng jì"]]},
+    {t:"第十二课《我是小导游》",w:[["旅游","lǚ yóu"],["景点","jǐng diǎn"],["纪念品","jì niàn pǐn"],["欣赏","xīn shǎng"],["介绍","jiè shào"]]},
+    {t:"第十三课《美猴王孙悟空》",w:[["本领","běn lǐng"],["宝贝","bǎo bèi"],["立刻","lì kè"],["自言自语","zì yán zì yǔ"],["神仙","shén xiān"]]},
+    {t:"第十四课《这个主意真棒》",w:[["厨房","chú fáng"],["餐馆","cān guǎn"],["可怜","kě lián"],["不慌不忙","bù huāng bù máng"]]},
+    {t:"第十五课《一年四季好风光》",w:[["凉爽","liáng shuǎng"],["炎热","yán rè"],["冬天","dōng tiān"],["春天","chūn tiān"],["盛开","shèng kāi"],["秋天","qiū tiān"],["寒冷","hán lěng"],["季节","jì jié"]]},
+    {t:"第十六课《多彩的动物世界》",w:[["漂亮","piào liang"],["惊奇","jīng qí"],["长颈鹿","cháng jǐng lù"],["蝴蝶","hú dié"],["解释","jiě shì"]]}
+  ],
+  p5: [
+    {t:"第一课《到户外去》",w:[["露营","lù yíng"],["探险","tàn xiǎn"],["攀岩","pān yán"],["物品清单","wù pǐn qīng dān"],["防止","fáng zhǐ"],["禁止","jìn zhǐ"],["竞赛","jìng sài"],["齐心协力","qí xīn xié lì"],["配合","pèi hé"],["狼吞虎咽","láng tūn hǔ yàn"],["一望无际","yī wàng wú jì"],["景色","jǐng sè"]]},
+    {t:"第二课《身体会说话》",w:[["正确","zhèng què"],["强烈","qiáng liè"],["定期","dìng qī"],["放松","fàng sōng"],["目不转睛","mù bù zhuǎn jīng"],["无精打采","wú jīng dǎ cǎi"],["咳嗽","ké sou"],["下降","xià jiàng"],["伤害","shāng hài"]]},
+    {t:"第三课《懂事的你》",w:[["营养","yíng yǎng"],["材料","cái liào"],["搅拌","jiǎo bàn"],["惊喜","jīng xǐ"],["异口同声","yì kǒu tóng shēng"],["鸦雀无声","yā què wú shēng"],["七嘴八舌","qī zuǐ bā shé"],["语重心长","yǔ zhòng xīn cháng"],["爱惜","ài xī"]]},
+    {t:"第四课《分享是快乐的》",w:[["捐款","juān kuǎn"],["确保","què bǎo"],["冷冻","lěng dòng"],["新鲜","xīn xiān"],["食品","shí pǐn"],["蔬菜","shū cài"],["自私","zì sī"],["村民","cūn mín"],["愉快","yú kuài"],["幸福","xìng fú"]]},
+    {t:"第五课《我闯祸了》",w:[["受欢迎","shòu huān yíng"],["积极","jī jí"],["矛盾","máo dùn"],["解决","jiě jué"],["骄傲","jiāo ào"],["珍宝","zhēn bǎo"],["爱惜","ài xī"],["愤怒","fèn nù"],["严肃","yán sù"],["勇气","yǒng qì"]]},
+    {t:"第六课《我的东西找到了》",w:[["丢失","diū shī"],["联系","lián xì"],["员工","yuán gōng"],["争先恐后","zhēng xiān kǒng hòu"],["喜出望外","xǐ chū wàng wài"],["不约而同","bù yuē ér tóng"],["诚实","chéng shí"],["善良","shàn liáng"]]},
+    {t:"第七课《一千桶水》",w:[["海洋","hǎi yáng"],["呼吸","hū xī"],["皮肤","pí fū"],["保温","bǎo wēn"],["绝望","jué wàng"],["依依不舍","yī yī bù shě"],["消失","xiāo shī"],["波浪","bō làng"]]},
+    {t:"第八课《和时间赛跑》",w:[["灭绝","miè jué"],["发明","fā míng"],["灵感","líng gǎn"],["世纪","shì jì"],["人类","rén lèi"],["永远","yǒng yuǎn"],["光阴似箭","guāng yīn sì jiàn"],["珍惜","zhēn xī"],["宝贵","bǎo guì"]]},
+    {t:"第九课《很久很久以前》",w:[["花木兰","huā mù lán"],["免费","miǎn fèi"],["父亲","fù qīn"],["从军","cóng jūn"],["士兵","shì bīng"],["孝心","xiào xīn"],["英雄","yīng xióng"],["保家卫国","bǎo jiā wèi guó"]]},
+    {t:"第十课《成长的烦恼》",w:[["成长","chéng zhǎng"],["嘲笑","cháo xiào"],["控制","kòng zhì"],["小心翼翼","xiǎo xīn yì yì"],["惭愧","cán kuì"],["感恩","gǎn ēn"],["拥有","yōng yǒu"]]},
+    {t:"第十一课《同学之间》",w:[["打架","dǎ jià"],["面子","miàn zi"],["彼此","bǐ cǐ"],["无聊","wú liáo"]]},
+    {t:"第十二课《新加坡，我为你骄傲》",w:[["著名","zhù míng"],["自豪","zì háo"],["兴高采烈","xìng gāo cǎi liè"],["庆典","qìng diǎn"],["激动人心","jī dòng rén xīn"],["五彩缤纷","wǔ cǎi bīn fēn"],["烟花","yān huā"],["骄傲","jiāo ào"]]},
+    {t:"第十三课《汉字王国》",w:[["记录","jì lù"],["历史","lì shǐ"],["甲骨文","jiǎ gǔ wén"],["产生","chǎn shēng"],["统计","tǒng jì"],["优美","yōu měi"],["独特","dú tè"],["艺术","yì shù"],["胸有成竹","xiōng yǒu chéng zhú"],["恍然大悟","huǎng rán dà wù"]]},
+    {t:"第十四课《老师，谢谢您》",w:[["辛勤","xīn qín"],["顽皮","wán pí"],["培育","péi yù"],["委屈","wěi qū"],["温暖","wēn nuǎn"],["自信","zì xìn"],["敬爱","jìng ài"],["困难","kùn nán"]]},
+    {t:"第十五课《想当一棵树》",w:[["体验","tǐ yàn"],["慷慨","kāng kǎi"],["茂密","mào mì"],["幽默","yōu mò"]]},
+    {t:"第十六课《语言的力量》",w:[["资源","zī yuán"],["生命","shēng mìng"],["污染","wū rǎn"],["和谐共处","hé xié gòng chǔ"],["力量","lì liàng"],["奇妙","qí miào"],["陶醉","táo zuì"],["冷漠无情","lěng mò wú qíng"]]}
+  ],
+  p6: [
+    {t:"第一课《加油！加油！》",w:[["懒惰","lǎn duò"],["锻炼","duàn liàn"],["严格","yán gé"],["优雅","yōu yǎ"],["鲜艳","xiān yàn"],["榜样","bǎng yàng"],["临时抱佛脚","lín shí bào fó jiǎo"]]},
+    {t:"第二课《祖孙情》",w:[["家庭和谐","jiā tíng hé xié"],["促进","cù jìn"],["美德","měi dé"],["迅速","xùn sù"],["湿透","shī tòu"],["惊讶","jīng yà"]]},
+    {t:"第三课《美食小侦探》",w:[["科学家","kē xué jiā"],["敏捷","mǐn jié"],["模仿","mó fǎng"],["九牛二虎之力","jiǔ niú èr hǔ zhī lì"],["伟大","wěi dà"],["智慧","zhì huì"],["不费吹灰之力","bù fèi chuī huī zhī lì"]]},
+    {t:"第四课《宝贵的礼物》",w:[["质量好","zhì liàng hǎo"],["货真价实","huò zhēn jià shí"],["便宜","pián yi"],["损坏","sǔn huài"],["普通","pǔ tōng"],["慈祥","cí xiáng"]]},
+    {t:"第五课《小故事，大道理》",w:[["笨鸟先飞","bèn niǎo xiān fēi"],["搬起石头砸自己的脚","bān qǐ shí tóu zá zì jǐ de jiǎo"],["坚固","jiān gù"],["一窝蜂","yī wō fēng"],["立即","lì jí"],["谎话连篇","huǎng huà lián piān"]]},
+    {t:"第六课《精彩三国》",w:[["忠诚","zhōng chéng"],["不谋而合","bù móu ér hé"],["对抗","duì kàng"],["杰出","jié chū"],["智慧","zhì huì"],["妒忌","dù jì"],["遵守","zūn shǒu"],["催促","cuī cù"]]},
+    {t:"第七课《世界走透透》",w:[["覆盖","fù gài"],["中暑","zhòng shǔ"],["震耳欲聋","zhèn ěr yù lóng"],["来龙去脉","lái lóng qù mài"],["奇迹","qí jì"],["流连忘返","liú lián wàng fǎn"]]},
+    {t:"第八课《新加坡的过去和现在》",w:[["古代传说","gǔ dài chuán shuō"],["娱乐","yú lè"],["若有所思","ruò yǒu suǒ sī"],["贡献","gòng xiàn"],["无忧无虑","wú yōu wú lǜ"]]},
+    {t:"第九课《说龙》",w:[["中华民族","zhōng huá mín zú"],["赛龙舟","sài lóng zhōu"],["固执","gù zhí"],["权力","quán lì"],["筋疲力尽","jīn pí lì jìn"]]},
+    {t:"第十课《走遍天下书为伴》",w:[["家境贫穷","jiā jìng pín qióng"],["朗读","lǎng dú"],["总算","zǒng suàn"],["暂时","zàn shí"],["惧怕","jù pà"]]},
+    {t:"第十一课《拥抱未来》",w:[["交通堵塞","jiāo tōng dǔ sè"],["不断尝试","bù duàn cháng shì"],["确定","què dìng"],["逐渐","zhú jiàn"],["垂头丧气","chuí tóu sàng qì"]]},
+    {t:"第十二课《再见，亲爱的伙伴》",w:[["孤单寂寞","gū dān jì mò"],["守望相助","shǒu wàng xiāng zhù"],["诚恳","chéng kěn"],["羡慕","xiàn mù"],["彻底","chè dǐ"]]}
+  ]
+};
+
+// ════════════════════════════════
+// 全局状态
+// ════════════════════════════════
+let cur = { grade:'p3', lessonIdx:0, words:[], idx:0, correct:0, wrong:0, results:[], mode:'lesson' };
+let reviewGrade = 'p3', reviewLessonIdx = 0;
+let printGrade = 'p3', printVer = 'v1';
+
+// ════════════════════════════════
+// localStorage 错题本 & 统计
+// ════════════════════════════════
+function loadWrong() {
+  try { return JSON.parse(localStorage.getItem('hcl_wrong') || '{}'); } catch(e){ return {}; }
+}
+function saveWrong(obj) { localStorage.setItem('hcl_wrong', JSON.stringify(obj)); }
+function addWrong(hanzi, pinyin) {
+  const w = loadWrong();
+  if (!w[hanzi]) w[hanzi] = { pinyin, count: 0, grade: cur.grade };
+  w[hanzi].count++;
+  saveWrong(w);
+  updateWrongBadge();
+}
+function loadStats() {
+  try { return JSON.parse(localStorage.getItem('hcl_stats') || '{"total":0,"correct":0,"sessions":0}'); } catch(e){ return {total:0,correct:0,sessions:0}; }
+}
+function saveStats(s) { localStorage.setItem('hcl_stats', JSON.stringify(s)); }
+function updateWrongBadge() {
+  const w = loadWrong();
+  const cnt = Object.keys(w).length;
+  const b = document.getElementById('wrong-badge');
+  if (cnt > 0) { b.textContent = '错题 ' + cnt; b.style.display = ''; }
+  else b.style.display = 'none';
+  const btn = document.getElementById('wrong-practice-btn');
+  const rbtn = document.getElementById('result-wrong-btn');
+  if (btn) btn.disabled = (cnt === 0);
+  if (rbtn) rbtn.disabled = (cnt === 0);
+}
+
+// ════════════════════════════════
+// 标签切换
+// ════════════════════════════════
+function showTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(name + '-panel').classList.add('active');
+  const tabs = ['practice','review','wrong','stats','print'];
+  document.querySelectorAll('.tab-btn')[tabs.indexOf(name)].classList.add('active');
+  if (name === 'wrong') renderWrongList();
+  if (name === 'stats') renderStats();
+  if (name === 'review') { buildReviewLessonSelect(); renderReview(); }
+  if (name === 'print') renderPrint();
+}
+
+// ════════════════════════════════
+// 年级/课文选择
+// ════════════════════════════════
+function setGrade(g) {
+  cur.grade = g;
+  document.querySelectorAll('#grade-btns .btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`#grade-btns .btn[onclick="setGrade('${g}')"]`).classList.add('active');
+  buildLessonSelect();
+}
+function buildLessonSelect() {
+  const sel = document.getElementById('lesson-select');
+  sel.innerHTML = D[cur.grade].map((ls, i) => `<option value="${i}">${ls.t}</option>`).join('');
+  cur.lessonIdx = 0;
+}
+function setLesson(idx) { cur.lessonIdx = parseInt(idx); }
+function startAllLesson() { cur.lessonIdx = -1; startPractice(); }
+
+// ════════════════════════════════
+// 开始练习
+// ════════════════════════════════
+function startPractice() {
+  cur.mode = 'lesson';
+  let words;
+  if (cur.lessonIdx === -1) {
+    words = D[cur.grade].flatMap(ls => ls.w);
+  } else {
+    words = [...D[cur.grade][cur.lessonIdx].w];
+  }
+  // 随机打乱
+  for (let i = words.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [words[i], words[j]] = [words[j], words[i]];
+  }
+  cur.words = words;
+  cur.idx = 0; cur.correct = 0; cur.wrong = 0; cur.results = [];
+  document.getElementById('practice-area').style.display = '';
+  document.getElementById('result-area').style.display = 'none';
+  updatePracticeUI();
+}
+
+function startWrongPractice() {
+  showTab('practice');
+  const w = loadWrong();
+  const entries = Object.entries(w);
+  if (entries.length === 0) { alert('错题本是空的，先做几道练习吧！'); return; }
+  cur.mode = 'wrong';
+  cur.words = entries.map(([h, v]) => [h, v.pinyin]);
+  for (let i = cur.words.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cur.words[i], cur.words[j]] = [cur.words[j], cur.words[i]];
+  }
+  cur.idx = 0; cur.correct = 0; cur.wrong = 0; cur.results = [];
+  document.getElementById('practice-area').style.display = '';
+  document.getElementById('result-area').style.display = 'none';
+  updatePracticeUI();
+}
+
+// ════════════════════════════════
+// 练习 UI
+// ════════════════════════════════
+function updatePracticeUI() {
+  const total = cur.words.length;
+  const n = cur.idx + 1;
+  document.getElementById('prog-text').textContent = `第 ${n} / ${total} 题`;
+  document.getElementById('score-text').innerHTML = `✅ ${cur.correct} &nbsp; ❌ ${cur.wrong}`;
+  document.getElementById('prog-bar').style.width = (cur.idx / total * 100) + '%';
+  document.getElementById('pinyin-display').textContent = cur.words[cur.idx][1];
+  const inp = document.getElementById('answer-input');
+  inp.value = '';
+  inp.className = 'answer-input';
+  inp.disabled = false;
+  inp.focus();
+  document.getElementById('feedback-box').textContent = '';
+  document.getElementById('feedback-box').className = 'feedback-box';
+  document.getElementById('confirm-btn').disabled = false;
+  document.getElementById('skip-btn').disabled = false;
+  document.getElementById('hint-btn').disabled = false;
+}
+
+function playWord() { speak(cur.words[cur.idx][0], 1); }
+function playWordSlow() { speak(cur.words[cur.idx][0], 0.6); }
+
+function speak(text, rate) {
+  if (!window.speechSynthesis) { alert('您的浏览器不支持语音朗读，请换用 Chrome/Edge'); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-CN';
+  u.rate = rate || 1;
+  u.pitch = 1;
+  const voices = window.speechSynthesis.getVoices();
+  const zhVoice = voices.find(v => v.lang.startsWith('zh') && v.name.includes('Google'))
+                || voices.find(v => v.lang.startsWith('zh'));
+  if (zhVoice) u.voice = zhVoice;
+  window.speechSynthesis.speak(u);
+}
+
+function checkAnswer() {
+  const inp = document.getElementById('answer-input');
+  const userAns = inp.value.trim();
+  if (!userAns) { playWord(); return; }
+  const correct = cur.words[cur.idx][0];
+  const isRight = (userAns === correct);
+  const fb = document.getElementById('feedback-box');
+  inp.disabled = true;
+  document.getElementById('confirm-btn').disabled = true;
+  document.getElementById('skip-btn').disabled = true;
+
+  if (isRight) {
+    inp.className = 'answer-input correct pop';
+    fb.className = 'feedback-box correct pop';
+    fb.textContent = '✅ 正确！' + correct;
+    cur.correct++;
+  } else {
+    inp.className = 'answer-input wrong pop';
+    fb.className = 'feedback-box wrong pop';
+    fb.textContent = `❌ 正确答案：${correct}（${cur.words[cur.idx][1]}）`;
+    cur.wrong++;
+    addWrong(correct, cur.words[cur.idx][1]);
+    speak(correct, 1);
+  }
+  cur.results.push({ word: cur.words[cur.idx], userAns, isRight });
+  setTimeout(() => nextWord(), isRight ? 1200 : 2200);
+}
+
+function showHint() {
+  const word = cur.words[cur.idx][0];
+  const hint = word.length <= 2 ? word[0] + (word.length > 1 ? '_'.repeat(word.length - 1) : '')
+                                : word[0] + '_'.repeat(word.length - 2) + word[word.length - 1];
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback-box hint pop';
+  fb.textContent = '💡 提示：' + hint + '（共' + word.length + '字）';
+}
+
+function skipWord() {
+  const correct = cur.words[cur.idx][0];
+  cur.wrong++;
+  cur.results.push({ word: cur.words[cur.idx], userAns: '（跳过）', isRight: false });
+  addWrong(correct, cur.words[cur.idx][1]);
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback-box wrong';
+  fb.textContent = '跳过 → ' + correct;
+  setTimeout(() => nextWord(), 1000);
+}
+
+function nextWord() {
+  cur.idx++;
+  if (cur.idx >= cur.words.length) {
+    showResult();
+  } else {
+    updatePracticeUI();
+  }
+}
+
+// ════════════════════════════════
+// 结果
+// ════════════════════════════════
+function showResult() {
+  document.getElementById('practice-area').style.display = 'none';
+  document.getElementById('result-area').style.display = '';
+  document.getElementById('result-detail').style.display = 'none';
+
+  const total = cur.words.length;
+  const pct = Math.round(cur.correct / total * 100);
+  document.getElementById('final-score').textContent = cur.correct;
+  document.getElementById('final-total').textContent = '/' + total;
+
+  let circle = document.getElementById('score-circle');
+  let rank, sub, color;
+  if (pct >= 95) { rank='🏆 太棒了！'; sub='满分接近，继续保持！'; color='#34a853'; }
+  else if (pct >= 80) { rank='🎉 很不错！'; sub='再多练习几次就满分了！'; color='#1a73e8'; }
+  else if (pct >= 60) { rank='📖 继续加油！'; sub='还有一些词需要反复练习。'; color='#fbbc04'; }
+  else { rank='💪 不要气馁！'; sub='错题本里已记录，专项复习一下吧！'; color='#ea4335'; }
+
+  circle.style.borderColor = color;
+  circle.style.color = color;
+  document.getElementById('rank-text').textContent = rank;
+  document.getElementById('rank-sub').textContent = sub;
+
+  // 更新统计
+  const s = loadStats();
+  s.total += total; s.correct += cur.correct; s.sessions++;
+  saveStats(s);
+
+  updateWrongBadge();
+}
+
+function showResultDetail() {
+  const box = document.getElementById('result-detail');
+  const list = document.getElementById('result-word-list');
+  box.style.display = '';
+  list.innerHTML = cur.results.map(r =>
+    `<li class="word-item ${r.isRight ? 'right-item' : 'wrong-item'}">
+      <span class="hanzi">${r.word[0]}</span>
+      <span class="py">${r.word[1]}</span>
+      <span class="py">${r.isRight ? '' : '你答：' + r.userAns}</span>
+      <span class="status-icon">${r.isRight ? '✅' : '❌'}</span>
+    </li>`
+  ).join('');
+}
+
+// ════════════════════════════════
+// 词语复习
+// ════════════════════════════════
+function setReviewGrade(g) {
+  reviewGrade = g;
+  document.querySelectorAll('#review-grade-btns .btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`#review-grade-btns .btn[onclick="setReviewGrade('${g}')"]`).classList.add('active');
+  buildReviewLessonSelect();
+  renderReview();
+}
+function buildReviewLessonSelect() {
+  const sel = document.getElementById('review-lesson-select');
+  sel.innerHTML = D[reviewGrade].map((ls, i) => `<option value="${i}">${ls.t}</option>`).join('');
+  reviewLessonIdx = 0;
+}
+function renderReview() {
+  reviewLessonIdx = parseInt(document.getElementById('review-lesson-select').value) || 0;
+  const ls = D[reviewGrade][reviewLessonIdx];
+  const el = document.getElementById('review-content');
+  el.innerHTML = `<div class="card">
+    <div class="card-title">${ls.t}</div>
+    <ul class="word-list">
+    ${ls.w.map(w => `
+      <li class="word-item">
+        <span class="hanzi" style="cursor:pointer" onclick="speak('${w[0]}',1)" title="点击朗读">${w[0]} 🔊</span>
+        <span class="py">${w[1]}</span>
+      </li>`).join('')}
+    </ul>
+  </div>`;
+}
+
+// ════════════════════════════════
+// 错题本
+// ════════════════════════════════
+function renderWrongList() {
+  const w = loadWrong();
+  const entries = Object.entries(w).sort((a,b) => b[1].count - a[1].count);
+  const el = document.getElementById('wrong-list-content');
+  if (entries.length === 0) {
+    el.innerHTML = '<div class="empty-state">🎉 错题本是空的，你太棒了！</div>';
+    return;
+  }
+  el.innerHTML = `<div class="card">
+    <div class="card-title">共 ${entries.length} 个错题</div>
+    ${entries.map(([h, v]) => `
+      <div class="wrong-list-item">
+        <span class="hanzi" style="cursor:pointer" onclick="speak('${h}',1)">${h} 🔊</span>
+        <div class="info">
+          <div class="py">${v.pinyin}</div>
+          <div class="cnt">错误 ${v.count} 次</div>
+        </div>
+        <button class="del-btn" onclick="deleteWrong('${h}')">✕</button>
+      </div>`).join('')}
+  </div>`;
+}
+function deleteWrong(h) {
+  const w = loadWrong();
+  delete w[h];
+  saveWrong(w);
+  updateWrongBadge();
+  renderWrongList();
+}
+function clearAllWrong() {
+  if (!confirm('确定清空全部错题？')) return;
+  localStorage.removeItem('hcl_wrong');
+  updateWrongBadge();
+  renderWrongList();
+}
+
+// ════════════════════════════════
+// 学习统计
+// ════════════════════════════════
+function renderStats() {
+  const s = loadStats();
+  const acc = s.total > 0 ? Math.round(s.correct / s.total * 100) : 0;
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${s.sessions}</div><div class="stat-label">练习次数</div></div>
+    <div class="stat-card"><div class="stat-num">${s.total}</div><div class="stat-label">总答题数</div></div>
+    <div class="stat-card"><div class="stat-num">${s.correct}</div><div class="stat-label">答对数</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:${acc>=80?'var(--success)':acc>=60?'var(--warn)':'var(--danger)'}">${acc}%</div><div class="stat-label">正确率</div></div>
+  `;
+  const w = loadWrong();
+  const top = Object.entries(w).sort((a,b) => b[1].count - a[1].count).slice(0,10);
+  const topEl = document.getElementById('top-wrong-list');
+  if (top.length === 0) {
+    topEl.innerHTML = '<li class="word-item" style="justify-content:center;color:var(--sub)">暂无错题记录</li>';
+  } else {
+    topEl.innerHTML = top.map(([h,v]) =>
+      `<li class="word-item wrong-item">
+        <span class="hanzi" style="cursor:pointer" onclick="speak('${h}',1)">${h}</span>
+        <span class="py">${v.pinyin}</span>
+        <span class="py" style="color:var(--danger)">❌ ${v.count}次</span>
+      </li>`
+    ).join('');
+  }
+}
+
+// ════════════════════════════════
+// 打印版
+// ════════════════════════════════
+function setPrintGrade(g) {
+  printGrade = g;
+  document.querySelectorAll('#print-grade-btns .btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`#print-grade-btns .btn[onclick="setPrintGrade('${g}')"]`).classList.add('active');
+  renderPrint();
+}
+function setPrintVer(v) {
+  printVer = v;
+  document.getElementById('pv1-btn').classList.toggle('active', v==='v1');
+  document.getElementById('pv2-btn').classList.toggle('active', v==='v2');
+  renderPrint();
+}
+function renderPrint() {
+  const wrapper = document.getElementById('print-wrapper');
+  wrapper.innerHTML = D[printGrade].map(ls => {
+    const isV1 = printVer === 'v1';
+    const hd = isV1
+      ? `<tr><th style="width:40%">汉字词语</th><th style="width:60%">拼音</th></tr>`
+      : `<tr><th style="width:30%">拼音提示</th><th style="width:35%">默写汉字</th><th style="width:35%">英文意思</th></tr>`;
+    const rows = ls.w.map(w => isV1
+      ? `<tr><td>${w[0]}</td><td>${w[1]}</td></tr>`
+      : `<tr><td>${w[1]}</td><td></td><td></td></tr>`
+    ).join('');
+    return `<div class="print-lesson-page">
+      <h2 class="lesson-title-print">${ls.t}</h2>
+      <div class="student-info-print">
+        <span>姓名：________________</span>
+        <span>日期：______________</span>
+        <span>得分：____ / ${ls.w.length}</span>
+      </div>
+      <table class="print-table"><thead>${hd}</thead><tbody>${rows}</tbody></table>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════
+// 初始化
+// ════════════════════════════════
+window.addEventListener('load', () => {
+  buildLessonSelect();
+  buildReviewLessonSelect();
+  renderPrint();
+  updateWrongBadge();
+  // 预加载语音
+  if (window.speechSynthesis) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => {};
+  }
+});
+</script>
+</body>
+</html>
