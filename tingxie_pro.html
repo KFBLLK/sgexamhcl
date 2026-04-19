@@ -109,8 +109,61 @@ body {
   gap: 8px;
 }
 .progress-info { font-size: 13px; color: var(--sub); }
-.progress-bar-wrap { height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 16px; }
-.progress-bar { height: 100%; background: var(--primary); border-radius: 3px; transition: width .3s; }
+/* ── 进度条增强 ── */
+.progress-bar-wrap {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.1);
+}
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #5b9cf6);
+  border-radius: 4px;
+  transition: width .35s cubic-bezier(.4,0,.2,1);
+  position: relative;
+  overflow: hidden;
+}
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+.progress-bar.done { background: linear-gradient(90deg, var(--success), #5dd179); }
+.progress-bar.done::after { display: none; }
+
+/* ── 键盘快捷键提示 ── */
+.kb-hints {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.kb-chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #f0f4ff;
+  border: 1px solid #c5d8ff;
+  color: var(--sub);
+}
+.kb-chip kbd {
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--primary);
+}
+
 
 .word-card {
   background: linear-gradient(135deg, #e8f0fe, #f0f4ff);
@@ -400,6 +453,7 @@ body {
         <span class="tip-chip">⌨️ 输入汉字</span>
         <span class="tip-chip">↵ 回车确认</span>
         <span class="tip-chip">📌 错词自动记录</span>
+        <span class="tip-chip">⌨️ 空格=重听 &nbsp; ESC=跳过</span>
       </div>
     </div>
     <div class="btn-group">
@@ -436,6 +490,11 @@ body {
         <button class="btn success large" onclick="checkAnswer()" id="confirm-btn">✔ 确认</button>
         <button class="btn large" onclick="skipWord()" id="skip-btn">跳过 →</button>
         <button class="btn" onclick="showHint()" id="hint-btn">💡 提示</button>
+      </div>
+      <div class="kb-hints">
+        <span class="kb-chip"><kbd>Space</kbd> 重听</span>
+        <span class="kb-chip"><kbd>Enter</kbd> 确认</span>
+        <span class="kb-chip"><kbd>Esc</kbd> 跳过</span>
       </div>
     </div>
   </div>
@@ -601,6 +660,48 @@ const D = {
 };
 
 // ════════════════════════════════
+// Web Audio 音效（Duolingo 风格，无需外部文件）
+// ════════════════════════════════
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _audioCtx;
+}
+function playCorrect() {
+  try {
+    const ctx = getAudioCtx();
+    const times = [0, 0.15];
+    times.forEach((t, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(i === 0 ? 880 : 1100, ctx.currentTime + t);
+      gain.gain.setValueAtTime(0, ctx.currentTime + t);
+      gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.25);
+      osc.start(ctx.currentTime + t);
+      osc.stop(ctx.currentTime + t + 0.3);
+    });
+  } catch(e) {}
+}
+function playWrong() {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(280, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(180, ctx.currentTime + 0.35);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.45);
+  } catch(e) {}
+}
+
+// ════════════════════════════════
 // 全局状态
 // ════════════════════════════════
 let cur = { grade:'p3', lessonIdx:0, words:[], idx:0, correct:0, wrong:0, results:[], mode:'lesson' };
@@ -717,7 +818,9 @@ function updatePracticeUI() {
   const n = cur.idx + 1;
   document.getElementById('prog-text').textContent = `第 ${n} / ${total} 题`;
   document.getElementById('score-text').innerHTML = `✅ ${cur.correct} &nbsp; ❌ ${cur.wrong}`;
-  document.getElementById('prog-bar').style.width = (cur.idx / total * 100) + '%';
+  const bar = document.getElementById('prog-bar');
+  bar.style.width = (cur.idx / total * 100) + '%';
+  bar.classList.remove('done');
   document.getElementById('pinyin-display').textContent = cur.words[cur.idx][1];
   const inp = document.getElementById('answer-input');
   inp.value = '';
@@ -764,12 +867,14 @@ function checkAnswer() {
     fb.className = 'feedback-box correct pop';
     fb.textContent = '✅ 正确！' + correct;
     cur.correct++;
+    playCorrect();
   } else {
     inp.className = 'answer-input wrong pop';
     fb.className = 'feedback-box wrong pop';
     fb.textContent = `❌ 正确答案：${correct}（${cur.words[cur.idx][1]}）`;
     cur.wrong++;
     addWrong(correct, cur.words[cur.idx][1]);
+    playWrong();
     speak(correct, 1);
   }
   cur.results.push({ word: cur.words[cur.idx], userAns, isRight });
@@ -799,6 +904,9 @@ function skipWord() {
 function nextWord() {
   cur.idx++;
   if (cur.idx >= cur.words.length) {
+    // 完成时进度条变绿
+    document.getElementById('prog-bar').style.width = '100%';
+    document.getElementById('prog-bar').classList.add('done');
     showResult();
   } else {
     updatePracticeUI();
@@ -1000,6 +1108,21 @@ window.addEventListener('load', () => {
     window.speechSynthesis.getVoices();
     window.speechSynthesis.onvoiceschanged = () => {};
   }
+
+  // 全局键盘快捷键
+  document.addEventListener('keydown', (e) => {
+    const area = document.getElementById('practice-area');
+    if (!area || area.style.display === 'none') return;
+    const inp = document.getElementById('answer-input');
+    if (!inp || inp.disabled) return;
+    if (e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      playWord();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      skipWord();
+    }
+  });
 });
 </script>
 </body>
